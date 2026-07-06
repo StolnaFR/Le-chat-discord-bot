@@ -3,14 +3,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-# ---------------------------------------------------------------------------
-# Configuration (variables lues dans le .env)
-# ---------------------------------------------------------------------------
-# MODO_ID           -> ID du rôle "staff/modération" autorisé à gérer les tickets
-# OWNER_ID          -> ID de l'utilisateur (propriétaire) autorisé à gérer les tickets
-# TICKET_CATEGORY_NAME (optionnel) -> nom de la catégorie où seront créés les tickets
-# TICKET_LOG_CHANNEL_ID (optionnel) -> salon où seront loggées les ouvertures/fermetures
-# ---------------------------------------------------------------------------
+
 MODO_ROLE_ID = int(os.getenv("MODO_ID", "0"))
 OWNER_ID = int(os.getenv("OWNER_ID", "0"))
 # Rôle supplémentaire à mentionner/autoriser sur les tickets (en plus de MODO_ID et OWNER_ID)
