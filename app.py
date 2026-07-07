@@ -31,6 +31,7 @@ ROLE_SALON = int(os.getenv("ROLE_SALON", "0"))
 
 intents = discord.Intents.default()
 intents.message_content = True 
+intents.members = True
 
 
 # ---------------------------------------------------------------------------
@@ -276,7 +277,9 @@ async def load_cogs():
         "cogs.logs",        # Logs : membres + messages
         "cogs.moderation",  # Modération : kick, ban, unban, mute, unmute, warn, clear
         "cogs.roles",       # Rôles : reaction roles & menus déroulants
-        "cogs.tiket",   
+        "cogs.tiket", 
+        "cogs.welcome",
+        
         ]
     
     for cog in cogs:
