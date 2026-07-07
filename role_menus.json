@@ -10,5 +10,92 @@
         "emoji": null
       }
     ]
+  },
+  "Couleurs": {
+    "title": "Choisi ta couleurs",
+    "description": "",
+    "image_url": null,
+    "image_path": "role_menu_images/Couleurs.gif",
+    "options": [
+      {
+        "role_id": "1522630243389669517",
+        "label": "\ud83e\ude77 Rose",
+        "emoji": null
+      },
+      {
+        "role_id": "1522671426656665644",
+        "label": "\ud83d\udc99 Bleu",
+        "emoji": null
+      },
+      {
+        "role_id": "1522630318610448474",
+        "label": "\u2764\ufe0f Rouge",
+        "emoji": null
+      }
+    ]
+  },
+  "fog": {
+    "title": "Fille ou Garcon",
+    "description": "",
+    "image_url": null,
+    "image_path": "role_menu_images/fog.gif",
+    "options": [
+      {
+        "role_id": "1522672671924686949",
+        "label": "\ud83d\udc67 Fille",
+        "emoji": null
+      },
+      {
+        "role_id": "1522672729256497352",
+        "label": "\ud83d\udc71 Garcon",
+        "emoji": null
+      },
+      {
+        "role_id": "1522674202627407942",
+        "label": "\ud83e\udd0d",
+        "emoji": null
+      }
+    ]
+  },
+  "Situation-amoureuse": {
+    "title": "Choisis ta situation amoureuse",
+    "description": "",
+    "image_url": null,
+    "image_path": "role_menu_images/Situation-amoureuse.gif",
+    "options": [
+      {
+        "role_id": "1523011016642920579",
+        "label": "\u2764\ufe0f En couple",
+        "emoji": null
+      },
+      {
+        "role_id": "1523011079280787557",
+        "label": "\ud83d\udc94 Celibataire",
+        "emoji": null
+      },
+      {
+        "role_id": "1523011138655354973",
+        "label": "\ud83d\udc94 Compliquer",
+        "emoji": null
+      }
+    ]
+  },
+  "Age": {
+    "title": "Tu as quel age ?",
+    "description": "",
+    "image_url": null,
+    "image_path": "role_menu_images/Age.gif",
+    "options": [
+      {
+        "role_id": "1523042340351250482",
+        "label": "14-16 ans",
+        "emoji": null
+      },
+      {
+        "role_id": "1523042426200133632",
+        "label": "17-\u221e  ans",
+        "emoji": null
+      }
+    ]
   }
 }

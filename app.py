@@ -117,8 +117,8 @@ async def load_cogs():
         "cogs.moderation",  # Modération : kick, ban, unban, mute, unmute, warn, clear
         "cogs.roles",       # Rôles : reaction roles & menus déroulants
         "cogs.tiket",   
-        "cogs.automod",    # Tickets : ouverture/fermeture de tickets support
-    ]
+        ]
+    
     for cog in cogs:
         try:
             await bot.load_extension(cog)
