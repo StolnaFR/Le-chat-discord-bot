@@ -11,6 +11,11 @@ from discord.ext import commands
 
 IMAGE_DIR = "role_menu_images"
 
+# Chemin absolu pour les fichiers JSON (à la racine du projet)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROLE_MENUS_PATH = os.path.join(BASE_DIR, "role_menus.json")
+REACTION_ROLES_PATH = os.path.join(BASE_DIR, "reaction_roles.json")
+
 
 # ------------------------------------------------------------------
 # Helpers JSON
@@ -18,27 +23,27 @@ IMAGE_DIR = "role_menu_images"
 
 def get_reaction_roles():
     try:
-        with open('reaction_roles.json', 'r') as f:
+        with open(REACTION_ROLES_PATH, 'r') as f:
             return json.load(f).get("roles", [])
     except (FileNotFoundError, json.JSONDecodeError):
         return []
 
 
 def save_reaction_roles(roles):
-    with open('reaction_roles.json', 'w') as f:
+    with open(REACTION_ROLES_PATH, 'w') as f:
         json.dump({"roles": roles}, f, indent=2)
 
 
 def get_menus():
     try:
-        with open('role_menus.json', 'r') as f:
+        with open(ROLE_MENUS_PATH, 'r') as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return {}
 
 
 def save_menus(menus):
-    with open('role_menus.json', 'w') as f:
+    with open(ROLE_MENUS_PATH, 'w') as f:
         json.dump(menus, f, indent=2)
 
 
