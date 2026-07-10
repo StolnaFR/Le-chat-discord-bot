@@ -9,6 +9,9 @@ import threading
 import logging
 from datetime import datetime
 from collections import deque
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+import asyncio
 
 load_dotenv()  # Charge les variables depuis le fichier .env
 
@@ -30,6 +33,7 @@ ALLOWED_COMMAND_ROLE_IDS = {1515042783595991110, 1515050132607992039}
 USER_ID = int(os.getenv("USER_ID", "0"))
 CHANNEL_ID = int(os.getenv("CHANNEL_ID", "0"))
 ROLE_SALON = int(os.getenv("ROLE_SALON", "0"))
+BACKUP_CHANNEL_ID = 1522650423604019351
 
 intents = discord.Intents.default()
 intents.message_content = True 
@@ -154,6 +158,94 @@ class RestrictedCommandTree(app_commands.CommandTree):
 
 
 bot = commands.Bot(command_prefix='!', intents=intents, tree_cls=RestrictedCommandTree)
+
+
+
+# ---------------------------------------------------------------------------
+# Gestion des nouveux fichiers
+# ---------------------------------------------------------------------------
+
+class FileBackupHandler(FileSystemEventHandler):
+    def __init__(self, bot):
+        self.bot = bot
+        self.last_modified = {}
+
+    def process_event(self, event):
+        if event.is_directory:
+            return
+
+        path = os.path.abspath(event.src_path)
+        parent_dir = os.path.dirname(path)
+        base_dir_abs = os.path.abspath(BASE_DIR)
+        image_dir_abs = os.path.join(base_dir_abs, "role_menu_images")
+
+        is_json = path.endswith(".json") and parent_dir == base_dir_abs
+        is_image = path.lower().endswith((".png", ".jpg", ".jpeg", ".webp")) and parent_dir == image_dir_abs
+
+        if not (is_json or is_image):
+            return
+
+        now = datetime.now().timestamp()
+        last_time = self.last_modified.get(path, 0)
+        if now - last_time < 2.0:
+            return
+        self.last_modified[path] = now
+
+        if self.bot.loop and self.bot.loop.is_running():
+            asyncio.run_coroutine_threadsafe(
+                send_backup(path),
+                self.bot.loop
+            )
+
+    def on_modified(self, event):
+        self.process_event(event)
+
+    def on_created(self, event):
+        self.process_event(event)
+
+
+async def send_backup(filepath):
+    await asyncio.sleep(1)
+
+    if not os.path.exists(filepath):
+        return
+
+    await bot.wait_until_ready()
+
+    channel = bot.get_channel(BACKUP_CHANNEL_ID)
+
+    if channel is None:
+        print("❌ Salon backup introuvable")
+        return
+
+    try:
+        filename = os.path.basename(filepath)
+
+        await channel.send(
+            content=f"📁 **Nouveau fichier détecté :** `{filename}`",
+            file=discord.File(filepath)
+        )
+
+        print(f"📤 Backup envoyé : {filename}")
+
+    except Exception as e:
+        print(f"❌ Erreur backup : {e}")
+
+
+def start_file_watcher():
+    event_handler = FileBackupHandler(bot)
+    bot.observer = Observer()
+    bot.observer.schedule(
+        event_handler,
+        path=BASE_DIR,
+        recursive=True
+    )
+    bot.observer.start()
+    print("👀 Surveillance des fichiers activée")
+
+
+
+
 
 
 # ---------------------------------------------------------------------------
@@ -336,10 +428,15 @@ async def on_ready():
         activity=discord.Game(name="Surveille ✨Les Chouchous✨")
     )
 
+    if not getattr(bot, "watcher_started", False):
+        start_file_watcher()
+        bot.watcher_started = True
+
 
 @bot.tree.command(name="bonjour", description="Le bot te dit bonjour !")
 async def bonjour(interaction: discord.Interaction):
     await interaction.response.send_message(f"Bonjour {interaction.user.mention} !")
+
 
 
 # ---------------------------------------------------------------------------
