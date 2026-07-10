@@ -4,6 +4,9 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
+from flask import Flask
+import threading
+import logging
 
 load_dotenv()  # Charge les variables depuis le fichier .env
 
@@ -33,6 +36,30 @@ intents = discord.Intents.default()
 intents.message_content = True 
 intents.members = True
 
+
+# ---------------------------------------------------------------------------
+# Configuration Flask (pour Render Web Service)
+# ---------------------------------------------------------------------------
+
+app = Flask(__name__)
+
+# Désactiver les logs de Flask pour un output plus propre
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
+
+@app.route('/')
+def home():
+    return {"status": "🤖 Bot Discord is running!", "message": "Service actif sur Render"}, 200
+
+@app.route('/health')
+def health():
+    return {"health": "✅ OK"}, 200
+
+def run_flask():
+    """Lance le serveur Flask sur le port 5000"""
+    port = int(os.getenv("PORT", 5000))
+    print(f"[FLASK] 🌐 Serveur Flask lancé sur le port {port}")
+    app.run(host='0.0.0.0', port=port, debug=False)
 
 # ---------------------------------------------------------------------------
 # CommandTree personnalisé — restriction d'accès globale
@@ -305,6 +332,11 @@ if __name__ == '__main__':
         async with bot:
             await load_cogs()
             await bot.start(TOKEN)
+
+    # Lancer Flask dans un thread séparé
+    flask_thread = threading.Thread(target=run_flask, daemon=True)
+    flask_thread.start()
+    print("[PROD] 🚀 Thread Flask lancé en arrière-plan")
 
     try:
         asyncio.run(main())
