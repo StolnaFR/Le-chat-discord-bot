@@ -2,18 +2,8 @@ import os
 import json
 import discord
 from discord import app_commands
-from discord.ext import commands,tasks
+from discord.ext import commands
 from dotenv import load_dotenv
-from flask import Flask, jsonify, render_template
-import threading
-import logging
-from datetime import datetime
-from collections import deque
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
-import asyncio
-import requests
-
 
 load_dotenv()  # Charge les variables depuis le fichier .env
 
@@ -29,109 +19,20 @@ os.makedirs(IMAGE_DIR, exist_ok=True)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROLE_MENUS_PATH = os.path.join(BASE_DIR, "role_menus.json")
 
+print(f"[PROD] 📁 Chemin du projet: {BASE_DIR}")
+print(f"[PROD] 📄 Chemin du fichier JSON: {ROLE_MENUS_PATH}")
+
 
 ALLOWED_COMMAND_ROLE_IDS = {1515042783595991110, 1515050132607992039}
 
 USER_ID = int(os.getenv("USER_ID", "0"))
 CHANNEL_ID = int(os.getenv("CHANNEL_ID", "0"))
 ROLE_SALON = int(os.getenv("ROLE_SALON", "0"))
-BACKUP_CHANNEL_ID = 1522650423604019351
 
 intents = discord.Intents.default()
 intents.message_content = True 
 intents.members = True
 
-
-# ---------------------------------------------------------------------------
-# Système de Logging Personnalisé
-# ---------------------------------------------------------------------------
-
-class LogCapture:
-    def __init__(self, max_logs=1000):
-        self.logs = deque(maxlen=max_logs)
-        self.lock = threading.Lock()
-    
-    def add_log(self, message, log_type="info"):
-        timestamp = datetime.now().strftime("%H:%M:%S")
-        with self.lock:
-            self.logs.append({
-                "timestamp": timestamp,
-                "message": message,
-                "type": log_type
-            })
-    
-    def get_logs(self):
-        with self.lock:
-            return list(self.logs)
-    
-    def clear_logs(self):
-        with self.lock:
-            self.logs.clear()
-
-log_capture = LogCapture(max_logs=1000)
-
-# Redirection des logs personnalisés
-_original_print = print
-
-def custom_print(*args, **kwargs):
-    message = " ".join(str(arg) for arg in args)
-    
-    # Déterminer le type de log
-    if "❌" in message or "Erreur" in message or "ERROR" in message:
-        log_type = "error"
-    elif "✅" in message or "succès" in message:
-        log_type = "success"
-    elif "🔍" in message or "🔄" in message or "📋" in message or "📤" in message or "🗑️" in message:
-        log_type = "info"
-    elif "⚠️" in message or "Warning" in message:
-        log_type = "warning"
-    else:
-        log_type = "info"
-    
-    log_capture.add_log(message, log_type)
-    _original_print(*args, **kwargs)
-
-# Remplacer la fonction print globalement
-import builtins
-builtins.print = custom_print
-
-# Imprimer les logs d'initialisation
-custom_print(f"[PROD] 📁 Chemin du projet: {BASE_DIR}")
-custom_print(f"[PROD] 📄 Chemin du fichier JSON: {ROLE_MENUS_PATH}")
-
-
-# ---------------------------------------------------------------------------
-# Configuration Flask (pour Render Web Service)
-# ---------------------------------------------------------------------------
-
-app = Flask(__name__)
-
-# Désactiver les logs de Flask pour un output plus propre
-log = logging.getLogger('werkzeug')
-log.setLevel(logging.ERROR)
-
-@app.route('/')
-def home():
-    return render_template('index.html')
-
-@app.route('/api/logs')
-def get_logs():
-    return jsonify({"logs": log_capture.get_logs()})
-
-@app.route('/api/logs/clear', methods=['POST'])
-def clear_logs():
-    log_capture.clear_logs()
-    return jsonify({"status": "cleared"})
-
-@app.route('/health')
-def health():
-    return jsonify({"health": "✅ OK", "status": "running"})
-
-def run_flask():
-    """Lance le serveur Flask sur le port 5000"""
-    port = int(os.getenv("PORT", 5000))
-    print(f"[FLASK] 🌐 Serveur Flask lancé sur le port {port}")
-    app.run(host='0.0.0.0', port=port, debug=False)
 
 # ---------------------------------------------------------------------------
 # CommandTree personnalisé — restriction d'accès globale
@@ -160,107 +61,6 @@ class RestrictedCommandTree(app_commands.CommandTree):
 
 
 bot = commands.Bot(command_prefix='!', intents=intents, tree_cls=RestrictedCommandTree)
-
-
-
-
-@tasks.loop(minutes=10)  # Toutes les 10 minutes
-async def keepalive():
-    try:
-        requests.get("https://le-chat-discord-bot.onrender.com/", timeout=5)
-        print("[KEEPALIVE] Ping envoyé")
-    except Exception as e:
-        print(f"[KEEPALIVE] Erreur : {e}")
-
-
-
-
-
-# ---------------------------------------------------------------------------
-# Gestion des nouveux fichiers
-# ---------------------------------------------------------------------------
-
-class FileBackupHandler(FileSystemEventHandler):
-    def __init__(self, bot):
-        self.bot = bot
-        self.last_modified = {}
-
-    def process_event(self, event):
-        if event.is_directory:
-            return
-
-        path = os.path.abspath(event.src_path)
-        parent_dir = os.path.dirname(path)
-        base_dir_abs = os.path.abspath(BASE_DIR)
-        image_dir_abs = os.path.join(base_dir_abs, "role_menu_images")
-
-        is_json = path.endswith(".json") and parent_dir == base_dir_abs
-        is_image = path.lower().endswith((".png", ".jpg", ".jpeg", ".webp")) and parent_dir == image_dir_abs
-
-        if not (is_json or is_image):
-            return
-
-        now = datetime.now().timestamp()
-        last_time = self.last_modified.get(path, 0)
-        if now - last_time < 2.0:
-            return
-        self.last_modified[path] = now
-
-        if self.bot.loop and self.bot.loop.is_running():
-            asyncio.run_coroutine_threadsafe(
-                send_backup(path),
-                self.bot.loop
-            )
-
-    def on_modified(self, event):
-        self.process_event(event)
-
-    def on_created(self, event):
-        self.process_event(event)
-
-
-async def send_backup(filepath):
-    await asyncio.sleep(1)
-
-    if not os.path.exists(filepath):
-        return
-
-    await bot.wait_until_ready()
-
-    channel = bot.get_channel(BACKUP_CHANNEL_ID)
-
-    if channel is None:
-        print("❌ Salon backup introuvable")
-        return
-
-    try:
-        filename = os.path.basename(filepath)
-
-        await channel.send(
-            content=f"📁 **Nouveau fichier détecté :** `{filename}`",
-            file=discord.File(filepath)
-        )
-
-        print(f"📤 Backup envoyé : {filename}")
-
-    except Exception as e:
-        print(f"❌ Erreur backup : {e}")
-
-
-def start_file_watcher():
-    event_handler = FileBackupHandler(bot)
-    bot.observer = Observer()
-    bot.observer.schedule(
-        event_handler,
-        path=BASE_DIR,
-        recursive=True
-    )
-    bot.observer.start()
-    print("👀 Surveillance des fichiers activée")
-
-
-
-
 
 
 # ---------------------------------------------------------------------------
@@ -443,25 +243,10 @@ async def on_ready():
         activity=discord.Game(name="Surveille ✨Les Chouchous✨")
     )
 
-    if not getattr(bot, "watcher_started", False):
-        start_file_watcher()
-        bot.watcher_started = True
-
-
-@bot.event
-async def on_ready():
-    """Événement déclenché quand le bot s'est connecté avec succès"""
-    print(f"[PROD] ✅ Bot connecté en tant que {bot.user}")
-    # Démarrer la boucle de keepalive
-    if not keepalive.is_running():
-        keepalive.start()
-        print("[PROD] 🔄 Boucle keepalive démarrée (ping toutes les 10 minutes)")
-
 
 @bot.tree.command(name="bonjour", description="Le bot te dit bonjour !")
 async def bonjour(interaction: discord.Interaction):
     await interaction.response.send_message(f"Bonjour {interaction.user.mention} !")
-
 
 
 # ---------------------------------------------------------------------------
@@ -504,19 +289,6 @@ async def load_cogs():
         except Exception as e:
             print(f"[PROD] Erreur lors du chargement de {cog} : {e}")
 
-# ---------------------------------------------------------------------------
-# Conexion serveur
-# ---------------------------------------------------------------------------
-
-@bot.tree.command(name="server-stat", description="Affiche la latence du bot")
-async def server_stat(interaction: discord.Interaction):
-    ping = round(bot.latency * 1000)
-    await interaction.response.send_message(
-        f" Latence du serveur : {ping} ms"
-    )
-
-
-
 
 # ---------------------------------------------------------------------------
 # Lancement
@@ -533,11 +305,6 @@ if __name__ == '__main__':
         async with bot:
             await load_cogs()
             await bot.start(TOKEN)
-
-    # Lancer Flask dans un thread séparé
-    flask_thread = threading.Thread(target=run_flask, daemon=True)
-    flask_thread.start()
-    print("[PROD] 🚀 Thread Flask lancé en arrière-plan")
 
     try:
         asyncio.run(main())
