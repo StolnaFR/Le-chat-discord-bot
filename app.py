@@ -164,7 +164,7 @@ bot = commands.Bot(command_prefix='!', intents=intents, tree_cls=RestrictedComma
 
 
 
-@bot.loop(minutes=10)  # Toutes les 10 minutes
+@tasks.loop(minutes=10)  # Toutes les 10 minutes
 async def keepalive():
     try:
         requests.get("https://le-chat-discord-bot.onrender.com/", timeout=5)
@@ -446,6 +446,16 @@ async def on_ready():
     if not getattr(bot, "watcher_started", False):
         start_file_watcher()
         bot.watcher_started = True
+
+
+@bot.event
+async def on_ready():
+    """Événement déclenché quand le bot s'est connecté avec succès"""
+    print(f"[PROD] ✅ Bot connecté en tant que {bot.user}")
+    # Démarrer la boucle de keepalive
+    if not keepalive.is_running():
+        keepalive.start()
+        print("[PROD] 🔄 Boucle keepalive démarrée (ping toutes les 10 minutes)")
 
 
 @bot.tree.command(name="bonjour", description="Le bot te dit bonjour !")
