@@ -2,7 +2,7 @@ import os
 import json
 import discord
 from discord import app_commands
-from discord.ext import commands
+from discord.ext import commands,tasks
 from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template
 import threading
@@ -12,6 +12,8 @@ from collections import deque
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import asyncio
+import requests
+
 
 load_dotenv()  # Charge les variables depuis le fichier .env
 
@@ -158,6 +160,19 @@ class RestrictedCommandTree(app_commands.CommandTree):
 
 
 bot = commands.Bot(command_prefix='!', intents=intents, tree_cls=RestrictedCommandTree)
+
+
+
+
+@bot.loop(minutes=10)  # Toutes les 10 minutes
+async def keepalive():
+    try:
+        requests.get("https://le-chat-discord-bot.onrender.com/", timeout=5)
+        print("[KEEPALIVE] Ping envoyé")
+    except Exception as e:
+        print(f"[KEEPALIVE] Erreur : {e}")
+
+
 
 
 
