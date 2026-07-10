@@ -382,6 +382,21 @@ async def load_cogs():
         except Exception as e:
             print(f"[PROD] Erreur lors du chargement de {cog} : {e}")
 
+# ---------------------------------------------------------------------------
+# Conexion serveur
+# ---------------------------------------------------------------------------
+
+@bot.event
+async def on_message(message):
+    if message.author.bot:
+        return
+
+    if message.content == "/server-stat":
+        ping = round(bot.latency * 1000)
+        await message.channel.send(f" Latence du serveur : {ping} ms")
+
+
+
 
 # ---------------------------------------------------------------------------
 # Lancement
