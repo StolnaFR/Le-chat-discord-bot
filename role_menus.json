@@ -1,16 +1,4 @@
 {
-  "Test": {
-    "title": "test",
-    "description": "",
-    "image_url": null,
-    "options": [
-      {
-        "role_id": "1515044039295242290",
-        "label": "\u2764\ufe0f",
-        "emoji": null
-      }
-    ]
-  },
   "Couleurs": {
     "title": "Choisi ta couleurs",
     "description": "",
@@ -94,6 +82,34 @@
       {
         "role_id": "1523042426200133632",
         "label": "17-\u221e  ans",
+        "emoji": null
+      }
+    ]
+  },
+  "OSEX": {
+    "title": "Choisis ton  orientation sexuelle",
+    "description": "",
+    "image_url": null,
+    "image_path": "role_menu_images/OSEX.gif",
+    "options": [
+      {
+        "role_id": "1524137603270709288",
+        "label": "Hetero",
+        "emoji": null
+      },
+      {
+        "role_id": "1524137648048967790",
+        "label": "Bi",
+        "emoji": null
+      },
+      {
+        "role_id": "1524137680160686181",
+        "label": "gay",
+        "emoji": null
+      },
+      {
+        "role_id": "1524137709805895691",
+        "label": "lesbienne",
         "emoji": null
       }
     ]
