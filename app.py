@@ -386,14 +386,12 @@ async def load_cogs():
 # Conexion serveur
 # ---------------------------------------------------------------------------
 
-@bot.event
-async def on_message(message):
-    if message.author.bot:
-        return
-
-    if message.content == "/server-stat":
-        ping = round(bot.latency * 1000)
-        await message.channel.send(f" Latence du serveur : {ping} ms")
+@bot.tree.command(name="server-stat", description="Affiche la latence du bot")
+async def server_stat(interaction: discord.Interaction):
+    ping = round(bot.latency * 1000)
+    await interaction.response.send_message(
+        f" Latence du serveur : {ping} ms"
+    )
 
 
 
