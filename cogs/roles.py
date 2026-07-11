@@ -4,22 +4,12 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-
-# ---------------------------------------------------------------------------
-# Rôles — reaction roles & menus déroulants de rôles
-# ---------------------------------------------------------------------------
-
 IMAGE_DIR = "role_menu_images"
 
 # Chemin absolu pour les fichiers JSON (à la racine du projet)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ROLE_MENUS_PATH = os.path.join(BASE_DIR, "role_menus.json")
 REACTION_ROLES_PATH = os.path.join(BASE_DIR, "reaction_roles.json")
-
-
-# ------------------------------------------------------------------
-# Helpers JSON
-# ------------------------------------------------------------------
 
 def get_reaction_roles():
     try:
@@ -46,14 +36,7 @@ def save_menus(menus):
     with open(ROLE_MENUS_PATH, 'w') as f:
         json.dump(menus, f, indent=2)
 
-
-# ------------------------------------------------------------------
-# Vue — menu déroulant de rôles
-# ------------------------------------------------------------------
-
 class RoleMenuView(discord.ui.View):
-    """Menu déroulant persistant permettant à un membre de s'auto-assigner des rôles."""
-
     def __init__(self, menu_name: str, options_data: list):
         super().__init__(timeout=None)
         self.menu_name = menu_name
@@ -113,14 +96,7 @@ class RoleMenuView(discord.ui.View):
 
         await interaction.response.send_message("✅ Tes rôles ont été mis à jour.", ephemeral=True)
 
-
-# ------------------------------------------------------------------
-# Cog principal
-# ------------------------------------------------------------------
-
 class RolesCog(commands.Cog):
-    """Gère les reaction roles et les menus déroulants de rôles."""
-
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
@@ -140,10 +116,6 @@ class RolesCog(commands.Cog):
 
         bot.tree.add_command(self.rolemenu_group)
         bot.tree.add_command(self.reactionrole_group)
-
-    # ------------------------------------------------------------------
-    # Reaction roles — événements
-    # ------------------------------------------------------------------
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
@@ -177,10 +149,6 @@ class RolesCog(commands.Cog):
                             await member.remove_roles(role)
                         except discord.Forbidden:
                             print("Erreur : Je n'ai pas les permissions d'enlever le rôle.")
-
-    # ------------------------------------------------------------------
-    # Enregistrement des sous-commandes /rolemenu
-    # ------------------------------------------------------------------
 
     def _register_rolemenu_commands(self):
 
@@ -356,10 +324,6 @@ class RolesCog(commands.Cog):
                 f"le message reste affiché mais ne fonctionnera plus : supprime-le manuellement si besoin.",
                 ephemeral=True
             )
-
-    # ------------------------------------------------------------------
-    # Enregistrement des sous-commandes /reactionrole
-    # ------------------------------------------------------------------
 
     def _register_reactionrole_commands(self):
 

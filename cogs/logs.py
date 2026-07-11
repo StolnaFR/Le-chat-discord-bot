@@ -3,11 +3,6 @@ import asyncio
 import discord
 from discord.ext import commands
 
-
-# ---------------------------------------------------------------------------
-# Logs — arrivées/départs membres + messages supprimés/modifiés
-# ---------------------------------------------------------------------------
-
 WELCOME_IMAGE_PATH = os.path.join("assets", "welcome_banner.png")
 GOODBYE_IMAGE_PATH = os.path.join("assets", "goodbye_banner.png")
 
@@ -15,17 +10,10 @@ SERVER_LOG_CHANNEL_ID = 1522650423604019351
 
 
 class LogsCog(commands.Cog):
-    """Gère les logs du serveur : membres et messages."""
-
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    # ------------------------------------------------------------------
-    # Utilitaire interne
-    # ------------------------------------------------------------------
-
     async def send_server_log(self, guild: discord.Guild, embed: discord.Embed):
-        """Envoie un embed dans le salon de logs généraux du serveur."""
         channel = guild.get_channel(SERVER_LOG_CHANNEL_ID)
         if channel is None:
             print(f"Erreur : salon de logs {SERVER_LOG_CHANNEL_ID} introuvable.")
@@ -35,13 +23,8 @@ class LogsCog(commands.Cog):
         except discord.Forbidden:
             print("Erreur : je n'ai pas la permission d'envoyer un message dans le salon de logs généraux.")
 
-    # ------------------------------------------------------------------
-    # Événements — membres
-    # ------------------------------------------------------------------
-
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
-        """Envoie un message de bienvenue (avec image) quand un membre arrive sur le serveur."""
         log_embed = discord.Embed(
             description=f"📥 **Arrivée** — {member.mention} (`{member.id}`)\nCompte créé le {member.created_at.strftime('%d/%m/%Y')}",
             color=discord.Color.blurple()
@@ -95,10 +78,6 @@ class LogsCog(commands.Cog):
         except FileNotFoundError:
             print(f"Erreur : image introuvable à {GOODBYE_IMAGE_PATH}")
 
-    # ------------------------------------------------------------------
-    # Événements — messages
-    # ------------------------------------------------------------------
-
     @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message):
         if message.author.bot or message.guild is None:
@@ -133,10 +112,6 @@ class LogsCog(commands.Cog):
         )
         embed.set_footer(text=f"ID auteur : {before.author.id}")
         await self.send_server_log(before.guild, embed)
-
-    # ------------------------------------------------------------------
-    # Rappel de bump — Disboard
-    # ------------------------------------------------------------------
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):

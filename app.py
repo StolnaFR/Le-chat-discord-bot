@@ -5,17 +5,13 @@ from discord import app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
 
-load_dotenv()  # Charge les variables depuis le fichier .env
+load_dotenv()
 
-# ---------------------------------------------------------------------------
-# Environnement : PROD (bot de production — serveur officiel)
-# ---------------------------------------------------------------------------
 ENV = "prod"
 
 IMAGE_DIR = "role_menu_images"  
 os.makedirs(IMAGE_DIR, exist_ok=True)
 
-# Chemin absolu du fichier role_menus.json (à la racine du projet)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROLE_MENUS_PATH = os.path.join(BASE_DIR, "role_menus.json")
 
@@ -25,27 +21,23 @@ print(f"[PROD] 📄 Chemin du fichier JSON: {ROLE_MENUS_PATH}")
 
 ALLOWED_COMMAND_ROLE_IDS = {1515042783595991110, 1515050132607992039}
 
+COMMANDES_PUBLIQUES = {"niveau"}
+
 USER_ID = int(os.getenv("USER_ID", "0"))
 CHANNEL_ID = int(os.getenv("CHANNEL_ID", "0"))
 ROLE_SALON = int(os.getenv("ROLE_SALON", "0"))
 
-intents = discord.Intents.default()
-intents.message_content = True 
-intents.members = True
-
-
-# ---------------------------------------------------------------------------
-# CommandTree personnalisé — restriction d'accès globale
-# ---------------------------------------------------------------------------
+intents = discord.Intents.all()
 
 class RestrictedCommandTree(app_commands.CommandTree):
-    """CommandTree personnalisé : bloque l'accès à TOUTES les commandes slash sauf pour les membres
-    ayant un des rôles autorisés (ou le propriétaire/un administrateur du serveur, pour éviter de se
-    bloquer soi-même). Ça ne concerne PAS l'attribution de rôle par réaction, qui reste ouverte à tous."""
-
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.guild is None:
             return False
+
+        if interaction.command is not None:
+            racine = interaction.command.qualified_name.split(" ")[0]
+            if racine in COMMANDES_PUBLIQUES:
+                return True
 
         member = interaction.user
         if not isinstance(member, discord.Member):
@@ -62,18 +54,13 @@ class RestrictedCommandTree(app_commands.CommandTree):
 
 bot = commands.Bot(command_prefix='!', intents=intents, tree_cls=RestrictedCommandTree)
 
-
-# ---------------------------------------------------------------------------
-# Événements de base
-# ---------------------------------------------------------------------------
-
 @bot.event
 async def on_ready():
     print(f'[PROD] Connecté en tant que {bot.user} (ID: {bot.user.id})')
     print('[PROD] Le bot est prêt !')
     print('------')
 
-    guild_id = os.getenv("GUILD_ID")  # optionnel : ID du serveur pour un sync instantané
+    guild_id = os.getenv("GUILD_ID")
 
     try:
         if guild_id:
@@ -86,10 +73,6 @@ async def on_ready():
             print(f"[PROD] {len(synced)} commande(s) slash synchronisée(s) globalement (peut prendre jusqu'à 1h).")
     except Exception as e:
         print(f"[PROD] Erreur lors de la synchronisation des commandes slash : {e}")
-
-    # ===============================================================
-    # Supprimer les anciens menus et renvoyer tous les menus de rôles
-    # ===============================================================
     
     print(f"[PROD] ROLE_SALON configuré : {ROLE_SALON}")
     
@@ -97,7 +80,6 @@ async def on_ready():
         try:
             print(f"[PROD] 🔍 Recherche du serveur avec guild_id: {guild_id}")
             
-            # Récupérer TOUS les serveurs du bot
             guilds = bot.guilds
             print(f"[PROD] Le bot est sur {len(guilds)} serveur(s)")
             
@@ -170,20 +152,17 @@ async def on_ready():
                                             try:
                                                 print(f"[PROD] 📤 Envoi du menu '{menu_name}'...")
                                                 
-                                                # Vérifier la structure du menu
                                                 if "title" not in menu_data:
                                                     print(f"[PROD]    ⚠️ Clé 'title' manquante dans le menu")
                                                 if "options" not in menu_data:
                                                     print(f"[PROD]    ⚠️ Clé 'options' manquante dans le menu")
                                                 
-                                                # Créer l'embed
                                                 embed = discord.Embed(
                                                     title=menu_data.get("title", "Menu"),
                                                     description=menu_data.get("description") or None,
                                                     color=discord.Color.blurple()
                                                 )
                                                 
-                                                # Ajouter l'image si elle existe
                                                 file = None
                                                 image_path = menu_data.get("image_path")
                                                 if image_path and os.path.exists(image_path):
@@ -195,7 +174,6 @@ async def on_ready():
                                                     print(f"[PROD]    → URL image: {menu_data.get('image_url')}")
                                                     embed.set_image(url=menu_data["image_url"])
                                                 
-                                                # Envoyer le menu avec la view
                                                 options = menu_data.get("options", [])
                                                 print(f"[PROD]    → {len(options)} rôle(s) dans ce menu")
                                                 
@@ -248,11 +226,6 @@ async def on_ready():
 async def bonjour(interaction: discord.Interaction):
     await interaction.response.send_message(f"Bonjour {interaction.user.mention} !")
 
-
-# ---------------------------------------------------------------------------
-# Gestion des erreurs de commandes slash
-# ---------------------------------------------------------------------------
-
 @bot.tree.error
 async def on_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
     if isinstance(error, app_commands.MissingPermissions):
@@ -266,20 +239,15 @@ async def on_app_command_error(interaction: discord.Interaction, error: app_comm
         if not interaction.response.is_done():
             await interaction.response.send_message("❌ Une erreur est survenue.", ephemeral=True)
 
-
-# ---------------------------------------------------------------------------
-# Chargement des cogs
-# ---------------------------------------------------------------------------
-
 async def load_cogs():
-    """Charge tous les modules (cogs) depuis le dossier cogs/."""
     cogs = [
-        "cogs.logs",        
-        "cogs.moderation",  
-        "cogs.roles",       
-        "cogs.tiket", 
+        "cogs.logs",      
+        "cogs.moderation",
+        "cogs.automod",   
+        "cogs.roles",     
+        "cogs.tickets", 
         "cogs.welcome",
-        
+        "cogs.niveaux",   
         ]
     
     for cog in cogs:
@@ -288,11 +256,6 @@ async def load_cogs():
             print(f"[PROD] Cog chargé : {cog}")
         except Exception as e:
             print(f"[PROD] Erreur lors du chargement de {cog} : {e}")
-
-
-# ---------------------------------------------------------------------------
-# Lancement
-# ---------------------------------------------------------------------------
 
 if __name__ == '__main__':
     import asyncio

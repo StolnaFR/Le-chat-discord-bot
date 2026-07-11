@@ -2,10 +2,12 @@ import os
 import json
 import random
 import time
+
 import discord
 from discord import app_commands
 from discord.ext import commands
 
+from cogs.tickets import is_staff
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, "data")
@@ -56,16 +58,13 @@ def get_profil(data: dict, guild_id: int, user_id: int) -> dict:
     u = g.setdefault(str(user_id), {"xp": 0, "niveau": 0, "last_message": 0})
     return u
 
-ALLOWED_ADMIN_ROLE_IDS = {1515042783595991110, 1515050132607992039}
-
 
 def est_autorise(interaction: discord.Interaction) -> bool:
     member = interaction.user
     if not isinstance(member, discord.Member):
         return False
-    if member.guild_permissions.administrator or member == interaction.guild.owner:
-        return True
-    return any(role.id in ALLOWED_ADMIN_ROLE_IDS for role in member.roles)
+    return is_staff(member)
+
 
 class Niveaux(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -119,7 +118,7 @@ class Niveaux(commands.Cog):
                 except discord.Forbidden:
                     print(f"[PROD] ❌ Permissions insuffisantes pour attribuer le rôle {role_id}")
 
-    niveau_group = app_commands.Group(name="niveaut", description="Système de niveaux")
+    niveau_group = app_commands.Group(name="niveau", description="Système de niveaux")
 
     @niveau_group.command(name="voir", description="Affiche ton niveau ou celui d'un membre")
     @app_commands.describe(membre="Le membre à consulter (par défaut : toi)")
@@ -232,6 +231,5 @@ class Niveaux(commands.Cog):
 
 async def setup(bot: commands.Bot):
     cog = Niveaux(bot)
-    bot.tree.add_command(cog.niveau_group)
     await bot.add_cog(cog)
     print("[PROD] Cog chargé : cogs.niveaux")
