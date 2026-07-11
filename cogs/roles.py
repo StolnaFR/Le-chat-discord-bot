@@ -4,18 +4,20 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-IMAGE_DIR = "role_menu_images"
-
-# Chemin absolu pour les fichiers JSON (à la racine du projet)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-<<<<<<< HEAD
-DATA_DIR = os.path.join(BASE_DIR, "data")  # ← Définir DATA_DIR d'abord
-ROLE_MENUS_PATH = os.path.join(DATA_DIR, "role_menus.json")
+# Chemins absolus (racine du projet)
+BASE_DIR  = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+IMAGE_DIR = os.path.join(BASE_DIR, "role_menu_images")
+DATA_DIR  = os.path.join(BASE_DIR, "data")
+os.makedirs(IMAGE_DIR, exist_ok=True)
+os.makedirs(DATA_DIR,  exist_ok=True)
+ROLE_MENUS_PATH     = os.path.join(DATA_DIR, "role_menus.json")
 REACTION_ROLES_PATH = os.path.join(DATA_DIR, "reaction_roles.json")
-=======
-ROLE_MENUS_PATH = os.path.join(BASE_DIR, "role_menus.json")
-REACTION_ROLES_PATH = os.path.join(BASE_DIR, "reaction_roles.json")
->>>>>>> fc1e6e5bd6bebb1a2bb9b0d7046e67c2cc73eb8e
+
+def resolve_image_path(path: str) -> str:
+    """Convertit un chemin relatif en absolu basé sur BASE_DIR."""
+    if path and not os.path.isabs(path):
+        return os.path.join(BASE_DIR, path)
+    return path
 
 def get_reaction_roles():
     try:
@@ -33,7 +35,12 @@ def save_reaction_roles(roles):
 def get_menus():
     try:
         with open(ROLE_MENUS_PATH, 'r') as f:
-            return json.load(f)
+            menus = json.load(f)
+        # Résoudre tous les image_path relatifs en absolus
+        for menu in menus.values():
+            if menu.get("image_path"):
+                menu["image_path"] = resolve_image_path(menu["image_path"])
+        return menus
     except (FileNotFoundError, json.JSONDecodeError):
         return {}
 

@@ -123,6 +123,7 @@ class Niveaux(commands.Cog):
     @niveau_group.command(name="voir", description="Affiche ton niveau ou celui d'un membre")
     @app_commands.describe(membre="Le membre à consulter (par défaut : toi)")
     async def voir(self, interaction: discord.Interaction, membre: discord.Member = None):
+        await interaction.response.defer()
         membre = membre or interaction.user
         profil = get_profil(self.data, interaction.guild.id, membre.id)
         requis = xp_requis(profil["niveau"])
@@ -137,13 +138,14 @@ class Niveaux(commands.Cog):
         embed.add_field(name="XP", value=f"{profil['xp']} / {requis}", inline=True)
         embed.add_field(name="Progression", value=barre, inline=False)
 
-        await interaction.response.send_message(embed=embed)
+        await interaction.followup.send(embed=embed)
 
     @niveau_group.command(name="classement", description="Affiche le classement des niveaux du serveur")
     async def classement(self, interaction: discord.Interaction):
+        await interaction.response.defer()
         g = self.data.get(str(interaction.guild.id), {})
         if not g:
-            await interaction.response.send_message("Personne n'a encore gagné d'XP ici.", ephemeral=True)
+            await interaction.followup.send("Personne n'a encore gagné d'XP ici.", ephemeral=True)
             return
 
         classement = sorted(
@@ -163,13 +165,14 @@ class Niveaux(commands.Cog):
             description="\n".join(lignes),
             color=discord.Color.gold()
         )
-        await interaction.response.send_message(embed=embed)
+        await interaction.followup.send(embed=embed)
 
     @niveau_group.command(name="ajouter", description="[Admin] Ajoute de l'XP à un membre")
     @app_commands.describe(membre="Le membre concerné", quantite="Quantité d'XP à ajouter")
     async def ajouter(self, interaction: discord.Interaction, membre: discord.Member, quantite: int):
+        await interaction.response.defer(ephemeral=True)
         if not est_autorise(interaction):
-            await interaction.response.send_message("❌ Tu n'es pas autorisé à utiliser cette commande.", ephemeral=True)
+            await interaction.followup.send("❌ Tu n'es pas autorisé à utiliser cette commande.", ephemeral=True)
             return
 
         profil = get_profil(self.data, interaction.guild.id, membre.id)
@@ -184,7 +187,7 @@ class Niveaux(commands.Cog):
         sauvegarder_donnees(self.data)
 
         msg = f"✅ {quantite} XP ajouté(s) à {membre.mention}. Niveau actuel : {profil['niveau']}."
-        await interaction.response.send_message(msg, ephemeral=True)
+        await interaction.followup.send(msg, ephemeral=True)
 
         if leveled_up:
             role_id = RECOMPENSES_NIVEAU.get(profil["niveau"])
@@ -199,8 +202,9 @@ class Niveaux(commands.Cog):
     @niveau_group.command(name="definir", description="[Admin] Définit le niveau et l'XP d'un membre")
     @app_commands.describe(membre="Le membre concerné", niveau="Nouveau niveau", xp="XP dans ce niveau")
     async def definir(self, interaction: discord.Interaction, membre: discord.Member, niveau: int, xp: int = 0):
+        await interaction.response.defer(ephemeral=True)
         if not est_autorise(interaction):
-            await interaction.response.send_message("❌ Tu n'es pas autorisé à utiliser cette commande.", ephemeral=True)
+            await interaction.followup.send("❌ Tu n'es pas autorisé à utiliser cette commande.", ephemeral=True)
             return
 
         profil = get_profil(self.data, interaction.guild.id, membre.id)
@@ -208,7 +212,7 @@ class Niveaux(commands.Cog):
         profil["xp"] = max(0, xp)
         sauvegarder_donnees(self.data)
 
-        await interaction.response.send_message(
+        await interaction.followup.send(
             f"✅ {membre.mention} est maintenant niveau {profil['niveau']} ({profil['xp']} xp).",
             ephemeral=True
         )
@@ -216,8 +220,9 @@ class Niveaux(commands.Cog):
     @niveau_group.command(name="reset", description="[Admin] Réinitialise le niveau d'un membre")
     @app_commands.describe(membre="Le membre concerné")
     async def reset(self, interaction: discord.Interaction, membre: discord.Member):
+        await interaction.response.defer(ephemeral=True)
         if not est_autorise(interaction):
-            await interaction.response.send_message("❌ Tu n'es pas autorisé à utiliser cette commande.", ephemeral=True)
+            await interaction.followup.send("❌ Tu n'es pas autorisé à utiliser cette commande.", ephemeral=True)
             return
 
         profil = get_profil(self.data, interaction.guild.id, membre.id)
@@ -226,7 +231,7 @@ class Niveaux(commands.Cog):
         profil["last_message"] = 0
         sauvegarder_donnees(self.data)
 
-        await interaction.response.send_message(f"✅ Niveau de {membre.mention} réinitialisé.", ephemeral=True)
+        await interaction.followup.send(f"✅ Niveau de {membre.mention} réinitialisé.", ephemeral=True)
 
 
 async def setup(bot: commands.Bot):

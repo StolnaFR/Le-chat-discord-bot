@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import discord
 from discord import app_commands
@@ -17,7 +18,9 @@ IMAGE_DIR = "role_menu_images"
 os.makedirs(IMAGE_DIR, exist_ok=True)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ROLE_MENUS_PATH = os.path.join(BASE_DIR, "role_menus.json")
+DATA_DIR = os.path.join(BASE_DIR, "data")
+os.makedirs(DATA_DIR, exist_ok=True)
+ROLE_MENUS_PATH = os.path.join(DATA_DIR, "role_menus.json")
 
 # ⭐ SETUP LOGGING GLOBAL
 class LogCapture(logging.Handler):
@@ -32,6 +35,33 @@ class LogCapture(logging.Handler):
                 self.socketio.emit('new_log', {'message': message})
             except:
                 pass
+
+    @classmethod
+    def add_raw(cls, message: str):
+        """Ajoute un message brut (depuis print) à la liste et l'émet."""
+        message = message.rstrip('\n')
+        if not message:
+            return
+        cls.logs_list.append(message)
+        if cls.socketio:
+            try:
+                cls.socketio.emit('new_log', {'message': message})
+            except:
+                pass
+
+# ⭐ Intercepteur de print() → panel web
+class PrintInterceptor:
+    def __init__(self, original_stdout):
+        self.original = original_stdout
+
+    def write(self, message):
+        self.original.write(message)
+        LogCapture.add_raw(message)
+
+    def flush(self):
+        self.original.flush()
+
+sys.stdout = PrintInterceptor(sys.stdout)
 
 log_handler = LogCapture()
 log_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
@@ -187,6 +217,8 @@ async def on_ready():
                                                 
                                                 file = None
                                                 image_path = menu_data.get("image_path")
+                                                if image_path and not os.path.isabs(image_path):
+                                                    image_path = os.path.join(BASE_DIR, image_path)
                                                 if image_path and os.path.exists(image_path):
                                                     print(f"[PROD]    → Image trouvée: {image_path}")
                                                     filename = os.path.basename(image_path)
@@ -287,7 +319,7 @@ def start_web_server():
         app, socketio = create_app_and_server(log_handler)
         log_handler.socketio = socketio
         print("[PROD] 🌐 Serveur web lancé sur http://localhost:5000")
-        socketio.run(app, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True, debug=False)
+        socketio.run(app, host="0.0.0.0", port=5000)
     except Exception as e:
         print(f"[PROD] ⚠️ Erreur serveur web: {e}")
         import traceback
