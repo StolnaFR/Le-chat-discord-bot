@@ -26,12 +26,6 @@ cd Le-chat-discord-bot
 Installez les dépendances :
 
 ```bash
-npm install
-```
-
-ou, si le projet est en Python :
-
-```bash
 pip install -r requirements.txt
 ```
 
@@ -43,11 +37,6 @@ DISCORD_TOKEN=VotreTokenIci
 
 Lancez ensuite le bot :
 
-```bash
-npm start
-```
-
-ou
 
 ```bash
 python main.py
