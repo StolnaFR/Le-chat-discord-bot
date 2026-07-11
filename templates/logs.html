@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Terminal - Bot Logs</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Courier New', monospace;
+            background: #2b2b2b;
+            color: #aaa;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+        }
+        
+        .terminal-header {
+            background: #2b2b2b;
+            padding: 8px 12px;
+            border-bottom: 1px solid #1a1a1a;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #aaa;
+        }
+        
+        .terminal-title {
+            flex: 1;
+        }
+        
+        .terminal-buttons {
+            display: flex;
+            gap: 6px;
+        }
+        
+        .btn {
+            width: 24px;
+            height: 24px;
+            border: none;
+            border-radius: 3px;
+            background: #3a3a3a;
+            color: #aaa;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        
+        .btn:hover {
+            background: #4a4a4a;
+        }
+        
+        .btn-close:hover {
+            background: #e74c3c;
+        }
+        
+        #logs { 
+            flex: 1;
+            background: #2b2b2b; 
+            padding: 12px 8px;
+            overflow-y: auto;
+            color: #aaa;
+            scrollbar-width: thin;
+            scrollbar-color: #555 #2b2b2b;
+        }
+        
+        #logs::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        #logs::-webkit-scrollbar-track {
+            background: #2b2b2b;
+        }
+        
+        #logs::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 4px;
+        }
+        
+        #logs::-webkit-scrollbar-thumb:hover {
+            background: #666;
+        }
+        
+        .log { 
+            margin: 0;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #aaa;
+        }
+        
+        .log.success {
+            color: #4ec9b0;
+        }
+        
+        .log.error {
+            color: #f48771;
+        }
+        
+        .log.warning {
+            color: #dcdcaa;
+        }
+        
+        .log.info {
+            color: #9cdcfe;
+        }
+    </style>
+</head>
+<body>
+    <div class="terminal-header">
+        <div class="terminal-title">Terminal</div>
+        <div class="terminal-buttons">
+            <button class="btn">−</button>
+            <button class="btn">□</button>
+            <button class="btn btn-close">✕</button>
+        </div>
+    </div>
+    <div id="logs"></div>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        const socket = io();
+        const logsDiv = document.getElementById('logs');
+
+        socket.on('new_log', (data) => {
+            const div = document.createElement('div');
+            div.className = 'log';
+            
+            // Coloriser selon le contenu
+            if (data.message.includes('✅') || data.message.includes('[SUCCESS]')) {
+                div.classList.add('success');
+            } else if (data.message.includes('❌') || data.message.includes('[ERROR]') || data.message.includes('Erreur')) {
+                div.classList.add('error');
+            } else if (data.message.includes('⚠️') || data.message.includes('[WARNING]')) {
+                div.classList.add('warning');
+            } else if (data.message.includes('ℹ️') || data.message.includes('[INFO]')) {
+                div.classList.add('info');
+            }
+            
+            div.textContent = data.message;
+            logsDiv.appendChild(div);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        });
+        
+        document.querySelector('.btn-close').onclick = () => {
+            if (confirm('Fermer le terminal ?')) {
+                window.close();
+            }
+        };
+    </script>
+</body>
+</html>

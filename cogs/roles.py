@@ -8,8 +8,9 @@ IMAGE_DIR = "role_menu_images"
 
 # Chemin absolu pour les fichiers JSON (à la racine du projet)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ROLE_MENUS_PATH = os.path.join(BASE_DIR, "role_menus.json")
-REACTION_ROLES_PATH = os.path.join(BASE_DIR, "reaction_roles.json")
+DATA_DIR = os.path.join(BASE_DIR, "data")  # ← Définir DATA_DIR d'abord
+ROLE_MENUS_PATH = os.path.join(DATA_DIR, "role_menus.json")
+REACTION_ROLES_PATH = os.path.join(DATA_DIR, "reaction_roles.json")
 
 def get_reaction_roles():
     try:

@@ -4,7 +4,10 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
-
+import logging
+import threading
+import asyncio
+from cogs.web_server import create_app_and_server
 load_dotenv()
 
 ENV = "prod"
@@ -14,6 +17,25 @@ os.makedirs(IMAGE_DIR, exist_ok=True)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROLE_MENUS_PATH = os.path.join(BASE_DIR, "role_menus.json")
+
+# ⭐ SETUP LOGGING GLOBAL
+class LogCapture(logging.Handler):
+    logs_list = []
+    socketio = None
+    
+    def emit(self, record):
+        message = self.format(record)
+        self.logs_list.append(message)
+        if self.socketio:
+            try:
+                self.socketio.emit('new_log', {'message': message})
+            except:
+                pass
+
+log_handler = LogCapture()
+log_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+logging.getLogger().addHandler(log_handler)
+logging.getLogger().setLevel(logging.INFO)
 
 print(f"[PROD] 📁 Chemin du projet: {BASE_DIR}")
 print(f"[PROD] 📄 Chemin du fichier JSON: {ROLE_MENUS_PATH}")
@@ -104,10 +126,10 @@ async def on_ready():
                         print(f"[PROD] 🗑️ Suppression des anciens menus de rôles dans #{channel.name}...")
                         
                         deleted_count = 0
-                        # Supprimer les 100 derniers messages du salon
+                        
                         async for message in channel.history(limit=100):
                             try:
-                                # Supprimer uniquement les messages du bot
+                                #
                                 if message.author == bot.user:
                                     await message.delete()
                                     deleted_count += 1
@@ -258,12 +280,27 @@ async def load_cogs():
         except Exception as e:
             print(f"[PROD] Erreur lors du chargement de {cog} : {e}")
 
-if __name__ == '__main__':
-    import asyncio
 
+def start_web_server():
+    try:
+        from cogs.web_server import create_app_and_server
+        app, socketio = create_app_and_server(log_handler)
+        log_handler.socketio = socketio
+        print("[PROD] 🌐 Serveur web lancé sur http://localhost:5000")
+        socketio.run(app, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True, debug=False)
+    except Exception as e:
+        print(f"[PROD] ⚠️ Erreur serveur web: {e}")
+        import traceback
+        traceback.print_exc()  
+
+        
+if __name__ == '__main__':
     TOKEN = os.getenv("DISCORD_TOKEN")
     if not TOKEN:
         raise SystemExit("[PROD] Erreur : la variable d'environnement DISCORD_TOKEN n'est pas définie (vois le fichier .env).")
+
+    web_thread = threading.Thread(target=start_web_server, daemon=True)
+    web_thread.start()
 
     async def main():
         async with bot:
