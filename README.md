@@ -1,4 +1,4 @@
-🤖 Le Chat – Bot Discord officiel de **✨Les chouchous✨**
+Le Chat – Bot Discord officiel de **✨Les chouchous✨**
 
 Bienvenue sur **Le Chat**, le bot Discord développé pour le serveur **✨Les chouchous✨**. Son objectif est d'apporter des fonctionnalités utiles, de l'animation et une meilleure expérience à tous les membres de la communauté.
 
@@ -32,7 +32,20 @@ pip install -r requirements.txt
 Configurez votre fichier `.env` avec votre token Discord :
 
 ```env
-DISCORD_TOKEN=VotreTokenIci
+DISCORD_TOKEN=
+GUILD_ID=
+WELCOME_CHANNEL_ID=
+GOODBYE_CHANNEL_ID=
+USER_BUMP_ID=
+CHANNEL_BUMP_ID=
+MODO_ID=
+OWNER_ID=
+TICKET_CATEGORY_NAME=
+TICKET_LOG_CHANNEL_ID=
+TICKET_PANEL_CHANNEL_ID=
+ROLE_SALON=
+LOG_MODO=
+BUMP_USER_ID=
 ```
 
 Lancez ensuite le bot :
