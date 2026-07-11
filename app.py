@@ -8,6 +8,7 @@ import logging
 import threading
 import asyncio
 from cogs.web_server import create_app_and_server
+
 load_dotenv()
 
 ENV = "prod"
@@ -129,7 +130,6 @@ async def on_ready():
                         
                         async for message in channel.history(limit=100):
                             try:
-                                #
                                 if message.author == bot.user:
                                     await message.delete()
                                     deleted_count += 1
@@ -270,7 +270,7 @@ async def load_cogs():
         "cogs.tickets", 
         "cogs.welcome",
         "cogs.niveaux",  
-        "cogs.bump" 
+        "cogs.bump",
         ]
     
     for cog in cogs:
@@ -293,7 +293,7 @@ def start_web_server():
         import traceback
         traceback.print_exc()  
 
-        
+
 if __name__ == '__main__':
     TOKEN = os.getenv("DISCORD_TOKEN")
     if not TOKEN:
