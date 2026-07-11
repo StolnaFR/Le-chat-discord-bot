@@ -52,7 +52,7 @@ Lancez ensuite le bot :
 
 
 ```bash
-python main.py
+python app.py
 ```
 
 ---
@@ -61,11 +61,11 @@ python main.py
 
 ```text
 📦 Le-chat-discord-bot
-├── commands/
-├── events/
-├── utils/
+├── asset/
+├── cogs/
+├── data/
 ├── config/
-├── assets/
+├── app.py
 ├── README.md
 └── ...
 ```
