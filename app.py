@@ -279,6 +279,7 @@ async def load_cogs():
         "cogs.roles",       
         "cogs.tiket", 
         "cogs.welcome",
+        "cogs.bump"
         
         ]
     
