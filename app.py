@@ -274,9 +274,9 @@ async def on_app_command_error(interaction: discord.Interaction, error: app_comm
 async def load_cogs():
     """Charge tous les modules (cogs) depuis le dossier cogs/."""
     cogs = [
-        "cogs.logs",        # Logs : membres + messages
-        "cogs.moderation",  # Modération : kick, ban, unban, mute, unmute, warn, clear
-        "cogs.roles",       # Rôles : reaction roles & menus déroulants
+        "cogs.logs",        
+        "cogs.moderation",  
+        "cogs.roles",       
         "cogs.tiket", 
         "cogs.welcome",
         

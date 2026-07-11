@@ -69,6 +69,7 @@ class Welcome(commands.Cog):
     # -----------------------------------------------------------------
     # Départ d'un membre
     # -----------------------------------------------------------------
+    
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
         if not GOODBYE_CHANNEL_ID:
