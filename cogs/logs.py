@@ -43,12 +43,6 @@ class LogsCog(commands.Cog):
         embed = discord.Embed(color=discord.Color.green())
         embed.set_image(url="attachment://welcome_banner.png")
 
-        try:
-            await channel.send(content=f"👋 Bienvenue {member.mention} !", embed=embed, file=file)
-        except discord.Forbidden:
-            print("Erreur : je n'ai pas la permission d'envoyer le message de bienvenue dans ce salon.")
-        except FileNotFoundError:
-            print(f"Erreur : image introuvable à {WELCOME_IMAGE_PATH}")
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
